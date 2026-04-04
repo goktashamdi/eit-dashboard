@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EIT Dashboard
  * Description: Ders kitabi yonetim dashboard plugin'i - Excel verisini AJAX ile sunar
- * Version: 2.4.0
+ * Version: 2.7
  * Author: EIT
  * Text Domain: eit-dashboard
  */
