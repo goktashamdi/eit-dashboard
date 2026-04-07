@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: EIT Dashboard
- * Description: Ders kitabi yonetim dashboard plugin'i - Excel verisini AJAX ile sunar
- * Version: 2.7
+ * Plugin Name: EIT Dashboard - Eklenti
+ * Description: Ders kitabi yonetim dashboard plugin'i - Excel verisini AJAX ile sunar (EKLENTI)
+ * Version: 2.7.1
  * Author: EIT
  * Text Domain: eit-dashboard
  */
