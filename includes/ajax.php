@@ -194,6 +194,78 @@ function eit_ajax_gorev_action() {
     wp_send_json_success(['version' => $version]);
 }
 
+/* ========== SAVE NOTE (eit_view yeterli) ========== */
+add_action('wp_ajax_eit_save_note', 'eit_ajax_save_note');
+function eit_ajax_save_note() {
+    check_ajax_referer('eit_nonce', 'nonce');
+
+    if (!current_user_can('eit_view')) {
+        wp_send_json_error('Yetkiniz yok');
+    }
+
+    $book_id = sanitize_text_field($_POST['book_id'] ?? '');
+    $ui      = intval($_POST['ui'] ?? -1);
+    $ii      = intval($_POST['ii'] ?? -1);
+    $op      = sanitize_text_field($_POST['note_op'] ?? 'add'); // 'add' or 'delete'
+
+    if (!$book_id || $ui < 0 || $ii < 0) {
+        wp_send_json_error('Geçersiz parametreler');
+    }
+
+    $saved = get_option('eit_books_data');
+    if (!$saved) wp_send_json_error('Veri bulunamadı');
+    $books = json_decode($saved, true);
+    if (!is_array($books)) wp_send_json_error('Veri okunamadı');
+
+    $found = false;
+    foreach ($books as &$b) {
+        if ($b['id'] !== $book_id) continue;
+        if (!isset($b['uniteler'][$ui]['icerikler'][$ii])) {
+            wp_send_json_error('İçerik bulunamadı');
+        }
+        $ic = &$b['uniteler'][$ui]['icerikler'][$ii];
+        if (!isset($ic['notlar']) || !is_array($ic['notlar'])) {
+            $ic['notlar'] = [];
+        }
+
+        if ($op === 'add') {
+            $text  = sanitize_text_field($_POST['note_text'] ?? '');
+            $image = esc_url_raw($_POST['note_image'] ?? '');
+            if (!$text && !$image) {
+                wp_send_json_error('Not boş olamaz');
+            }
+            $user = wp_get_current_user();
+            $note = [
+                'tarih' => wp_date('d.m.Y H:i'),
+                'yazar' => $user->display_name,
+                'metin' => $text,
+            ];
+            if ($image) $note['resim'] = $image;
+            $ic['notlar'][] = $note;
+        } elseif ($op === 'delete') {
+            $ni = intval($_POST['note_index'] ?? -1);
+            if ($ni < 0 || $ni >= count($ic['notlar'])) {
+                wp_send_json_error('Geçersiz not indeksi');
+            }
+            array_splice($ic['notlar'], $ni, 1);
+        } else {
+            wp_send_json_error('Geçersiz işlem');
+        }
+
+        $found = true;
+        break;
+    }
+    unset($b, $ic);
+
+    if (!$found) wp_send_json_error('Kitap bulunamadı');
+
+    update_option('eit_books_data', wp_json_encode($books), false);
+    $version = (int) get_option('eit_data_version', 0) + 1;
+    update_option('eit_data_version', $version);
+
+    wp_send_json_success(['version' => $version]);
+}
+
 /* ========== IMPORT BOOKS FROM JSON ========== */
 add_action('wp_ajax_eit_import_books', 'eit_ajax_import_books');
 function eit_ajax_import_books() {
